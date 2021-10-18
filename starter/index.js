@@ -43,41 +43,31 @@ const tempProduct = fs.readFileSync('./templates/product.html')
 const data = fs.readFileSync('./dev-data/data.json', 'utf-8')
 const dataObj = JSON.parse(data)
 
-const replaceTemplate = (temp, product) => {
-    let output = temp.replace(/{%PRODUCTNAME%}/g, product.productName)
-    output = output.replace(/{%IMAGE%}/g, product.image)
-    output = output.replace(/{%PRICE%}/g, product.price)
-    output = output.replace(/{%FROM%}/g, product.from)
-    output = output.replace(/{%NUTRIENTS%}/g, product.nutrients)
-    output = output.replace(/{%QUANTITY%}/g, product.quantity)
-    output = output.replace(/{%DESCRIPTION%}/g, product.description)
-    output = output.replace(/{%ID%}/g, product.id)
-    if(!product.organic) output = output.replace(/{%NOT_ORGANIC%}/g, 'not-organic')
-    return output
-    
-}
-
-
 
 //below codes will execute each time a request is made
 
 const server = http.createServer((req, res) => {
     console.log(req.url)
-
-    const pathname = req.url
+    // console.log(url.parse(url.parse(req.url, true)))
+    const {query, pathname} = url.parse(req.url, true)
+    // const pathname = req.url
 
     // Overview Page
     if (pathname === '/' || pathname === '/overview') {
         res.writeHead(200, { 'Content-type': 'text/html' })
 
         /// In arrow function if curly braces are not present then the function automatically returns the expected value
-        const cardsHtml = dataObj.map(el =>  replaceTemplate(tempCard, el) ).join('')
-        const output = tempOverview.replace('{%PRODUCT_CARDS}', cardsHtml)
-        
+        const cardsHtml = dataObj.map(el => replaceTemplate(tempCard, el)).join('')
+        const output = tempOverview.replace('{%PRODUCT_CARDS%}', cardsHtml)
+
         console.log(cardsHtml)
         res.end(output)
     } else if (pathname === '/product') {
-        res.end("This is the product")
+        const product = dataObj[query.id]
+        res.writeHead(200, {'Content-type' : 'text/html'})
+        const output = replaceTemplate(tempProduct, product)
+        // console.log(query)
+        res.end(output)
     } else if (pathname === '/api') {
         res.writeHead(200, { 'Content-type': 'application/json' })
         res.end(data)
